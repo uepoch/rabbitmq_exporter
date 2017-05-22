@@ -55,7 +55,7 @@ func main() {
 		//		"RABBIT_PASSWORD": config.RABBIT_PASSWORD,
 	}).Info("Starting RabbitMQ exporter")
 
-	log.Fatal(http.ListenAndServe(":"+config.PublishPort, nil))
+	log.Fatal(http.ListenAndServe(config.PublishPort, nil))
 }
 
 func getLogLevel() log.Level {

@@ -56,7 +56,7 @@ func initConfig() {
 		RabbitURL:          "http://localhost:15672",
 		RabbitUsername:     "guest",
 		RabbitPassword:     "guest",
-		PublishPort:        "9090",
+		PublishPort:        ":9090",
 		OutputFormat:       "TTY", //JSON
 		CAFile:             "ca.pem",
 		InsecureSkipVerify: false,
