@@ -1,26 +1,28 @@
 package main
 
 import (
+	"flag"
+	"log"
 	"os"
 	"regexp"
 	"strconv"
+
+	"github.com/imdario/mergo"
+
 	"strings"
 )
 
 var (
-	config        rabbitExporterConfig
-	defaultConfig = rabbitExporterConfig{
-		RabbitURL:          "http://localhost:15672",
-		RabbitUsername:     "guest",
-		RabbitPassword:     "guest",
-		PublishPort:        "9090",
-		OutputFormat:       "TTY", //JSON
-		CAFile:             "ca.pem",
-		InsecureSkipVerify: false,
-		SkipQueues:         "^$",
-		IncludeQueues:      ".*",
-		RabbitCapabilities: make(rabbitCapabilitySet),
-	}
+	config rabbitExporterConfig
+)
+
+var (
+	fRabbitURL      = flag.String("rabbit.url", "", "")
+	fRabbitUsername = flag.String("rabbit.user", "", "")
+	fRabbitPassword = flag.String("rabbit.password", "", "")
+	fPublishPort    = flag.String("web.listen-address", "127.0.0.1:9090", "")
+	fSkipQueues     = flag.String("collector.skip", "", "")
+	fIncludeQueues  = flag.String("collector.include", "", "")
 )
 
 type rabbitExporterConfig struct {
@@ -50,48 +52,68 @@ var allRabbitCapabilities = rabbitCapabilitySet{
 }
 
 func initConfig() {
-	config = defaultConfig
+	defaultConfig := rabbitExporterConfig{
+		RabbitURL:          "http://localhost:15672",
+		RabbitUsername:     "guest",
+		RabbitPassword:     "guest",
+		PublishPort:        "9090",
+		OutputFormat:       "TTY", //JSON
+		CAFile:             "ca.pem",
+		InsecureSkipVerify: false,
+		SkipQueues:         "^$",
+		IncludeQueues:      ".*",
+		RabbitCapabilities: make(rabbitCapabilitySet),
+	}
 	if url := os.Getenv("RABBIT_URL"); url != "" {
 		if valid, _ := regexp.MatchString("https?://[a-zA-Z.0-9]+", strings.ToLower(url)); valid {
-			config.RabbitURL = url
+			defaultConfig.RabbitURL = url
 		}
 	}
 
 	if user := os.Getenv("RABBIT_USER"); user != "" {
-		config.RabbitUsername = user
+		defaultConfig.RabbitUsername = user
 	}
 
 	if pass := os.Getenv("RABBIT_PASSWORD"); pass != "" {
-		config.RabbitPassword = pass
+		defaultConfig.RabbitPassword = pass
 	}
 
 	if port := os.Getenv("PUBLISH_PORT"); port != "" {
 		if _, err := strconv.Atoi(port); err == nil {
-			config.PublishPort = port
+			defaultConfig.PublishPort = port
 		}
 
 	}
 	if output := os.Getenv("OUTPUT_FORMAT"); output != "" {
-		config.OutputFormat = output
+		defaultConfig.OutputFormat = output
 	}
 
 	if cafile := os.Getenv("CAFILE"); cafile != "" {
-		config.CAFile = cafile
+		defaultConfig.CAFile = cafile
 	}
 	if insecureSkipVerify := os.Getenv("SKIPVERIFY"); insecureSkipVerify == "true" || insecureSkipVerify == "1" {
-		config.InsecureSkipVerify = true
+		defaultConfig.InsecureSkipVerify = true
 	}
 
 	if SkipQueues := os.Getenv("SKIP_QUEUES"); SkipQueues != "" {
-		config.SkipQueues = SkipQueues
+		defaultConfig.SkipQueues = SkipQueues
 	}
 
 	if IncludeQueues := os.Getenv("INCLUDE_QUEUES"); IncludeQueues != "" {
-		config.IncludeQueues = IncludeQueues
+		defaultConfig.IncludeQueues = IncludeQueues
 	}
 
 	if rawCapabilities := os.Getenv("RABBIT_CAPABILITIES"); rawCapabilities != "" {
-		config.RabbitCapabilities = parseCapabilities(rawCapabilities)
+		defaultConfig.RabbitCapabilities = parseCapabilities(rawCapabilities)
+	}
+	config = rabbitExporterConfig{
+		RabbitURL:      *fRabbitURL,
+		RabbitUsername: *fRabbitUsername,
+		RabbitPassword: *fRabbitPassword,
+		PublishPort:    *fPublishPort,
+	}
+	if err := mergo.Merge(&config, defaultConfig); err != nil {
+		log.Fatalf("%v while merging configs", err)
 	}
 }
 

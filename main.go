@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"net/http"
 	"os"
 	"strings"
@@ -23,6 +24,7 @@ func initLogger() {
 }
 
 func main() {
+	flag.Parse()
 	initConfig()
 	initLogger()
 	initClient()
