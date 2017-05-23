@@ -111,6 +111,8 @@ func initConfig() {
 		RabbitUsername: *fRabbitUsername,
 		RabbitPassword: *fRabbitPassword,
 		PublishPort:    *fPublishPort,
+		SkipQueues:     *fSkipQueues,
+		IncludeQueues:  *fIncludeQueues,
 	}
 	if err := mergo.Merge(&config, defaultConfig); err != nil {
 		log.Fatalf("%v while merging configs", err)
